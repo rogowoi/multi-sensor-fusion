@@ -16,7 +16,7 @@ def std_from_r(start_std, radius):
 
 def simulate(angles, radius, base_std=0.001):
     xs, ys, zs = trajectory(angles, radius)
-    std = std_from_r(base_std, radius)
+    std = 0.1 #std_from_r(base_std, radius)
     return xs + np.random.normal(0, std), ys + np.random.normal(0, std), zs + np.random.normal(0, std)
 
 

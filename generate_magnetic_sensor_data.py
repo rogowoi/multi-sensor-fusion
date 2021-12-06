@@ -103,6 +103,6 @@ if __name__ == '__main__':
                         help='Standard deviation of rotation of magnetic sensor, degrees')
 
     parser.add_argument('--out_dir', required=True, type=str, help='Output directory to store files')
-    parser.add_argument('--radius', required=False, type=int, default=2, help='Output directory to store files')
+    parser.add_argument('--radius', required=False, type=int, default=1, help='Output directory to store files')
     _args = parser.parse_args()
     generate(_args)
