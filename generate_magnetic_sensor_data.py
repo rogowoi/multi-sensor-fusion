@@ -2,7 +2,7 @@ import argparse
 import time
 
 import numpy as np
-from seetree.sifc_essentials import Pose, Trajectory
+from seetree.sifc_essentials import Pose, Trajectory, CameraPose, CameraTrajectory
 
 from trajectories import simulate, simulate_rotation, simulate_c, simulate_rotation_c, rotation_traj, trajectory
 
@@ -12,21 +12,21 @@ def generate(args):
 
     all_tmpstamps = np.linspace(0, 360, 10000)
     timestamps = np.random.choice(all_tmpstamps, 3600)
-
+    start_time = time.time()
     timestamps.sort()
-    ms_trajectory = create_ms_trajectory(radius, timestamps, args.ms_pos_std, args.ms_rot_std)
+    ms_trajectory = create_ms_trajectory(start_time, radius, timestamps, args.ms_pos_std, args.ms_rot_std)
 
     ms_trajectory.save_pkl(args.out_dir, 'ms_trajectory')
 
-    zed_trajectory, zed_acc = create_zed_trajectory(radius, timestamps, args.zed_pos_std, args.zed_rot_std)
+    zed_trajectory, zed_acc = create_zed_trajectory(start_time, radius, timestamps, args.zed_pos_std, args.zed_rot_std)
 
     zed_trajectory.save_pkl(args.out_dir, 'zed_trajectory')
 
-    gt_traj = create_gt_trajectory(radius, timestamps)
+    gt_traj = create_gt_trajectory(start_time, radius, timestamps)
     gt_traj.save_pkl(args.out_dir, 'gt_trajectory')
 
 
-def create_gt_trajectory(radius, timestamps):
+def create_gt_trajectory(start_time, radius, timestamps):
     rotations = []
     positions = []
     for angle in timestamps:
@@ -37,7 +37,7 @@ def create_gt_trajectory(radius, timestamps):
     positions = np.array(positions)
     rotations = np.array(rotations)
     traj = Trajectory()
-    start_time = time.time()
+    # start_time = time.time()
     i = 0
     for pos, rot in zip(positions, rotations):
         pose = Pose(i, start_time + 100 * i, T=pos, Re=rot)
@@ -45,7 +45,7 @@ def create_gt_trajectory(radius, timestamps):
     return traj
 
 
-def create_ms_trajectory(radius, timestamps, pos_std, rot_std):
+def create_ms_trajectory(start_time, radius, timestamps, pos_std, rot_std):
     rotations = []
     positions = []
     for angle in timestamps:
@@ -56,7 +56,7 @@ def create_ms_trajectory(radius, timestamps, pos_std, rot_std):
     positions = np.array(positions)
     rotations = np.array(rotations)
     traj = Trajectory()
-    start_time = time.time()
+    # start_time = time.time()
     i = 0
     for pos, rot in zip(positions, rotations):
         pose = Pose(i, start_time + 100 * i, T=pos, Re=rot)
@@ -64,7 +64,7 @@ def create_ms_trajectory(radius, timestamps, pos_std, rot_std):
     return traj
 
 
-def create_zed_trajectory(radius, timestamps, pos_std, rot_std):
+def create_zed_trajectory(start_time, radius, timestamps, pos_std, rot_std):
     rotations = []
     positions = []
     for angle in timestamps:
@@ -74,13 +74,6 @@ def create_zed_trajectory(radius, timestamps, pos_std, rot_std):
         positions.append(pos)
     positions = np.array(positions)
     rotations = np.array(rotations)
-    traj = Trajectory()
-    start_time = time.time()
-    i = 0
-    for pos, rot in zip(positions, rotations):
-        pose = Pose(i, start_time + 100 * i, T=pos, Re=rot)
-        traj.add(pose)
-
     v_x = np.gradient(positions[:, 0], 1)
     v_y = np.gradient(positions[:, 1], 1)
     v_z = np.gradient(positions[:, 2], 1)
@@ -88,8 +81,15 @@ def create_zed_trajectory(radius, timestamps, pos_std, rot_std):
     a_x = np.gradient(v_x, 1)
     a_y = np.gradient(v_y, 1)
     a_z = np.gradient(v_z, 1)
-
     acc_data = np.array([a_x, a_y, a_z])
+
+    traj = CameraTrajectory()
+    # start_time = time.time()
+    i = 0
+    for pos, rot in zip(positions, rotations):
+        pose = CameraPose(i, start_time + 1e9 * i, T=pos, Re=rot, imu_acc=acc_data)
+        traj.add(pose)
+
     return traj, acc_data
 
 
