@@ -10,7 +10,7 @@ from trajectories import simulate, simulate_rotation, simulate_c, simulate_rotat
 def generate(args):
     radius = args.radius
 
-    all_tmpstamps = np.linspace(0, 360, 10000)
+    all_tmpstamps = np.linspace(0, 360, 1000)
     timestamps = np.random.choice(all_tmpstamps, 3600)
     start_time = time.time()
     timestamps.sort()
@@ -40,7 +40,7 @@ def create_gt_trajectory(start_time, radius, timestamps):
     # start_time = time.time()
     i = 0
     for pos, rot in zip(positions, rotations):
-        pose = Pose(i, start_time + 100 * i, T=pos, Re=rot)
+        pose = Pose(i, start_time + 1e9 * i, T=pos, Re=rot)
         traj.add(pose)
     return traj
 
@@ -59,7 +59,7 @@ def create_ms_trajectory(start_time, radius, timestamps, pos_std, rot_std):
     # start_time = time.time()
     i = 0
     for pos, rot in zip(positions, rotations):
-        pose = Pose(i, start_time + 100 * i, T=pos, Re=rot)
+        pose = Pose(i, start_time + 1e9 * i, T=pos, Re=rot)
         traj.add(pose)
     return traj
 
@@ -81,13 +81,13 @@ def create_zed_trajectory(start_time, radius, timestamps, pos_std, rot_std):
     a_x = np.gradient(v_x, 1)
     a_y = np.gradient(v_y, 1)
     a_z = np.gradient(v_z, 1)
-    acc_data = np.array([a_x, a_y, a_z])
+    acc_data = np.array([a_x, a_y, a_z]).transpose()
 
     traj = CameraTrajectory()
     # start_time = time.time()
     i = 0
-    for pos, rot in zip(positions, rotations):
-        pose = CameraPose(i, start_time + 1e9 * i, T=pos, Re=rot, imu_acc=acc_data)
+    for pos, rot, acc in zip(positions, rotations, acc_data):
+        pose = CameraPose(i, start_time + 1e9 * i, T=pos, Re=rot, imu_acc=acc)
         traj.add(pose)
 
     return traj, acc_data
@@ -97,12 +97,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser("Generate magnetic sensor data")
     parser.add_argument('--ms_pos_std', default=0.001, type=float, required=False, help='Standard deviation of pose estimation on magnetic sensor, meters')
     parser.add_argument('--ms_rot_std', default=0.5, type=float, required=False, help='Standard deviation of rotation of magnetic sensor, degrees')
-    parser.add_argument('--zed_pos_std', default=0.1, type=float, required=False,
+    parser.add_argument('--zed_pos_std', default=0.001, type=float, required=False,
                         help='Standard deviation of rotation of magnetic sensor, degrees')
     parser.add_argument('--zed_rot_std', default=0.5, type=float, required=False,
                         help='Standard deviation of rotation of magnetic sensor, degrees')
 
     parser.add_argument('--out_dir', required=True, type=str, help='Output directory to store files')
-    parser.add_argument('--radius', required=False, type=int, default=1, help='Output directory to store files')
+    parser.add_argument('--radius', required=False, type=int, default=1.5, help='Output directory to store files')
     _args = parser.parse_args()
     generate(_args)

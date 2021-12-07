@@ -13,10 +13,15 @@ def trajectory(angle, radius):
 def std_from_r(start_std, radius):
     return start_std * np.exp(2 * radius)
 
+def linear_std(radius):
+    if radius < 0.5:
+        return 0.001
+    std = 0.2 * radius - 0.1
+    return std
 
 def simulate(angles, radius, base_std=0.001):
     xs, ys, zs = trajectory(angles, radius)
-    std = 0.1 #std_from_r(base_std, radius)
+    std = linear_std(radius)
     return xs + np.random.normal(0, std), ys + np.random.normal(0, std), zs + np.random.normal(0, std)
 
 
